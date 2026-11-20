@@ -9,6 +9,24 @@ from schemas import TodoCreate, TodoResponse, TodoUpdate, TodoReplace
 
 app = FastAPI()
 
+
+# ############ instead of separate api for each filter, we will include this logic in "get /todos" api only ##############
+# @app.get("/todos/completed", response_model=list[TodoResponse])
+# def get_completed_todos(
+#     db: Session = Depends(get_db)
+# ):
+#     # statement = select(Todo).where(Todo.is_completed == True)
+
+#     statement = select(Todo).where(Todo.iscompleted.is_(True))
+
+#     result = db.execute(statement)
+
+#     completed_todos = result.scalars().all()
+
+#     return completed_todos
+
+######################################
+
 @app.get("/todos/{todo_id}", response_model=TodoResponse)
 def get_todo(todo_id: int, db: Session = Depends(get_db)):
     todo = db.get(Todo, todo_id)
@@ -20,8 +38,17 @@ def get_todo(todo_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/todos", response_model= list[TodoResponse])
-def get_todos(db: Session=Depends(get_db)):
+def get_todos(
+        is_completed: bool | None = None,
+        db: Session=Depends(get_db)
+    ):
+
     statement = select(Todo)  #builds sql query statement: doesn't execute yet
+
+    # Filtering by completed status
+    if is_completed is not None:
+        statement = select(Todo).where(Todo.is_completed.is_(is_completed))
+
     result = db.execute(statement)  #executes the statement
 
     todos = result.scalars().all() 
@@ -117,3 +144,17 @@ def delete_todo(
     return {
         "detail": "todo record deleted successfully"
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
